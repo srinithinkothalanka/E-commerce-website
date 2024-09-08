@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="bootstrap.css">
+<link rel="stylesheet" href="bootstrap-icons-1.11.3 (3).zip">
+<script>
+function LoadCategories(){
+    fetch("https://fakestoreapi.com/products/categories")
+    .then(function(response){
+        return response.json();
+    })
+    .then(function(categories){
+        categories.unshift("all");
+        for(var category of categories){
+            var option = document.createElement("option");
+            option.text = category.toUpperCase();
+            option.value = category;
+            document.getElementById("lstCategories").appendChild(option);
+        }
+    });
+}
+
+function LoadProducts(url){
+    fetch(url)
+    .then(function(response){
+        return response.json();
+    })
+    .then(function(products){
+        document.querySelector("main").innerHTML = "";
+        for(var product of products){
+            var div = document.createElement("div");
+            div.className = "card p-2 m-2";
+            div.style.width = "200px";
+            div.innerHTML = `
+            <img src=${product.image} height="160">
+            <div class="card-header" style="height:130px"><p>${product.title}</p></div>
+            <div class="card-body">
+                <dl>
+                    <dt>Price</dt>
+                    <dd>${product.price}</dd>
+                    <dt>Rating</dt>
+                    <dd><span class="bi bi-star-fill text-success"></span>${product.rating.rate}</dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <button onclick="AddClick(${product.id})" class="btn btn-danger w-100">Add to Cart
+                    <span class="bi bi-cart4"></span>
+                </button>
+            </div>
+            `;
+            document.querySelector("main").appendChild(div);
+        }
+    });
+}
+
+function bodyload(){
+    LoadCategories();
+    LoadProducts("https://fakestoreapi.com/products");
+    GetCartItemsCount();
+}
+
+function CategoryChanged(){
+    var CategoryName = document.getElementById("lstCategories").value;
+    if(CategoryName == "all"){
+        LoadProducts("https://fakestoreapi.com/products");
+    } else {
+        LoadProducts(`https://fakestoreapi.com/products/category/${CategoryName}`);
+    }
+}
+
+function NavClicked(categoryName){
+    if(categoryName == "all"){
+        LoadProducts("https://fakestoreapi.com/products");
+    } else {
+        LoadProducts(`https://fakestoreapi.com/products/category/${categoryName}`);
+    }
+}
+
+var cartItems = [];
+function GetCartItemsCount(){
+    document.getElementById("lblCount").innerHTML = cartItems.length;
+}
+
+function AddClick(id){
+    fetch(`https://fakestoreapi.com/products/${id}`)
+    .then(function(response){
+        return response.json();
+    })
+    .then(function(product){
+        cartItems.push(product);
+        alert(product.title + "\nAdded to cart");
+        GetCartItemsCount();
+    });
+}
+
+function ShowCartClick(){
+    document.querySelector("tbody").innerHTML = ""; // Clear previous cart items
+    for(var item of cartItems){
+        var tr = document.createElement("tr");
+        var tdName = document.createElement("td");
+        var tdPrice = document.createElement("td");
+        var tdPreview = document.createElement("td");
+        var img = document.createElement("img");
+        img.src = item.image;
+        img.height = 50;
+        tdName.innerHTML = item.title;
+        tdPrice.innerHTML = item.price;
+        tdPreview.appendChild(img);
+        tr.appendChild(tdName);
+        tr.appendChild(tdPrice);
+        tr.appendChild(tdPreview);
+        document.querySelector("tbody").appendChild(tr);
+    }
+}
+</script>
+<style>
+a {
+    color: white;
+    text-decoration: none;
+}
+</style>
+</head>
+<body onload="bodyload()">
+
+<header class="container-fluid d-flex justify-content-between bg-primary text-white p-2 mt-2">
+    <div>
+        <h3>Shopper.</h3>
+    </div>
+    <div>
+        <span class="me-2"><a href="javascript:NavClicked('all')">Home</a></span>
+        <span class="me-2"><a href="javascript:NavClicked('electronics')">Electronics</a></span>
+        <span class="me-2"><a href="javascript:NavClicked('jewelery')">Jewellery</a></span>
+        <span class="me-2"><a href="#">Mens Fashion</a></span>
+        <span class="me-2"><a href="#">Womens Fashion</a></span>
+    </div>
+    <div>
+        <span class="bi bi-person me-2"></span>
+        <span class="bi bi-heart me-2"></span>
+        <a href="#cart" data-bs-toggle="modal" onclick="ShowCartClick()">
+            <span class="bi bi-cart3 me-2"></span><span class="badge bg-danger rounded-circle" id="lblCount">0</span>
+        </a>
+        <div class="modal" id="cart">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Your Cart Items</h2>
+                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<section class="row m-2">
+    <nav class="col-2">
+        <div>
+            <label>Select category</label>
+            <div>
+                <select id="lstCategories" onchange="CategoryChanged()" class="form-select"></select>
+            </div>
+        </div>
+    </nav>
+    <main class="col-10 d-flex flex-wrap overflow-auto" style="height:500px"></main>
+</section>
+<script src="jquery.js"></script>
+<script src="bootstrap.bundle.js"></script>
+</body>
+</html>
